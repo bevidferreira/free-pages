@@ -58,6 +58,7 @@ self.addEventListener('message', event => {
   data: {
     taskId: task.id
   }
+});
 }
 });
 
