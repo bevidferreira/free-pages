@@ -225,9 +225,13 @@ document.getElementById('toggle-notifications').addEventListener('change', e => 
   localStorage.setItem('notificationsEnabled', enabled);
 
   if (enabled && Notification.permission !== 'granted') {
-    Notification.requestPermission();
-  }
-});  
+  Notification.requestPermission().then(permission => {
+    if (permission !== 'granted') {
+      localStorage.setItem('notificationsEnabled', false);
+      document.getElementById('toggle-notifications').checked = false;
+    }
+  });
+  } 
   
 // --- Tarefas ---  
 function showToast(message) {  
