@@ -181,11 +181,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('select-dashboard-layout').value = savedLayout;  
   }  
   
-  const notifEnabled = JSON.parse(localStorage.getItem('notificationsEnabled'));  
-  document.getElementById('toggle-notifications').checked = notifEnabled !== false;  
+   const notifEnabled = JSON.parse(localStorage.getItem('notificationsEnabled'));
+const enabled = notifEnabled !== false;
+document.getElementById('toggle-notifications').checked = enabled;
+localStorage.setItem('notificationsEnabled', enabled);
   
   tasks = JSON.parse(localStorage.getItem('tasks')) || [];  
   renderTasks();
+  
+ showPage('page-dashboard');
+});
   
 // --- Configurações ---  
 document.getElementById('toggle-theme').addEventListener('change', e => {  
@@ -257,8 +262,9 @@ function saveTask() {
   time,  
   category,  
   completed: false,  
+  notified: false,
   createdAt  
-};  
+}; 
   tasks.push(task);  
   localStorage.setItem('tasks', JSON.stringify(tasks));  
   renderTasks();  
