@@ -150,11 +150,6 @@ button.add-task-active { background-color: var(--color-primary); color: white; }
 let tasks = [];  
 let filterCategory = null;  
   
-// --- Notificações ---  
-if ("Notification" in window && Notification.permission !== "granted") {  
-  Notification.requestPermission();  
-}  
-  
 // --- SPA ---  
 function showPage(pageId) {  
   document.querySelectorAll('#app main').forEach(p => p.classList.add('hidden'));  
@@ -230,9 +225,13 @@ document.getElementById('select-dashboard-layout').addEventListener('change', e 
   localStorage.setItem('dashboardLayout', layout);  
 });  
   
-document.getElementById('toggle-notifications').addEventListener('change', e => {  
-  const enabled = e.target.checked;  
-  localStorage.setItem('notificationsEnabled', enabled);  
+document.getElementById('toggle-notifications').addEventListener('change', e => {
+  const enabled = e.target.checked;
+  localStorage.setItem('notificationsEnabled', enabled);
+
+  if (enabled && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
 });  
   
 // --- Tarefas ---  
@@ -333,7 +332,7 @@ function renderTasks() {
   localStorage.setItem('tasks', JSON.stringify(tasks));
   renderTasks();
 } 
-  
+
  function toggleTask(id) {
   const idx = tasks.findIndex(t => t.id === id);
   if (idx === -1) return;
@@ -361,24 +360,10 @@ function scheduleTaskNotification(task) {
 
   if (Notification.permission !== "granted") return;
 }
-
   const taskTime = new Date(`${task.date}T${task.time}`).getTime();
   if (taskTime <= Date.now()) return; // ignora tarefas passadas
 
   const delay = taskTime - Date.now();
-
-  setTimeout(() => {
-    navigator.serviceWorker.ready.then(reg => {
-  reg.active.postMessage({
-    type: 'SHOW_NOTIFICATION',
-    task: task
-  });
-});
-
-    // marca como vista automaticamente
-    markTaskSeen(task.id);
-  }, delay);
-}
 
 // --- Ao carregar a página, agenda todas as tarefas futuras ---
 document.addEventListener('DOMContentLoaded', () => {
