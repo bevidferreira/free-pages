@@ -2,7 +2,8 @@
 <head>  
 <meta charset="utf-8"/>  
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
-<title>App Web Completo</title>  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>  <link rel="preconnect" href="https://fonts.googleapis.com"/>  
+<title>tarefas offline</title> <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#137fec"> <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>  <link rel="preconnect" href="https://fonts.googleapis.com"/>  
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>  
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>  
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>  <script>  
@@ -357,7 +358,9 @@ function renderTasks() {
 function scheduleTaskNotification(task) {
   const enabled = JSON.parse(localStorage.getItem('notificationsEnabled'));
   if (!enabled) return;
+
   if (Notification.permission !== "granted") return;
+}
 
   const taskTime = new Date(`${task.date}T${task.time}`).getTime();
   if (taskTime <= Date.now()) return; // ignora tarefas passadas
@@ -365,10 +368,12 @@ function scheduleTaskNotification(task) {
   const delay = taskTime - Date.now();
 
   setTimeout(() => {
-    new Notification(`Tarefa: ${task.title}`, {
-      body: task.desc || 'Hora da tarefa!',
-      tag: `task-${task.id}`
-    });
+    navigator.serviceWorker.ready.then(reg => {
+  reg.active.postMessage({
+    type: 'SHOW_NOTIFICATION',
+    task: task
+  });
+});
 
     // marca como vista automaticamente
     markTaskSeen(task.id);
@@ -414,22 +419,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Atualização automática de tarefas vencidas ---
 setInterval(() => {
   const now = Date.now();
-  let changed = false;
 
   tasks.forEach(task => {
-    const taskTime = new Date(`${task.date}T${task.time}`).getTime();
+    if (task.notified) return;
 
-    if (taskTime < now && !task.expired) {
-      task.expired = true;   // marca como vencida
-      changed = true;
+    const taskTime = new Date(`${task.date}T${task.time}`).getTime();
+    if (taskTime <= now) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.active.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          task: task
+        });
+      });
+
+      task.notified = true;
     }
   });
 
-  if (changed) {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    renderTasks();
-  }
-}, 60000); // executa a cada 1 minuto
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}, 30000); // a cada 30 segundos
 
+  if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+  }
+  
 </script>  </body>  
   </html> 
