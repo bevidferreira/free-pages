@@ -224,14 +224,20 @@ document.getElementById('toggle-notifications').addEventListener('change', e => 
   const enabled = e.target.checked;
   localStorage.setItem('notificationsEnabled', enabled);
 
-  if (enabled && Notification.permission !== 'granted') {
-  Notification.requestPermission().then(permission => {
-    if (permission !== 'granted') {
-      localStorage.setItem('notificationsEnabled', false);
+  if (enabled) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(p => {
+        if (p !== 'granted') {
+          document.getElementById('toggle-notifications').checked = false;
+          localStorage.setItem('notificationsEnabled', false);
+        }
+      });
+    } else if (Notification.permission === 'denied') {
       document.getElementById('toggle-notifications').checked = false;
+      localStorage.setItem('notificationsEnabled', false);
     }
-  });
-  } 
+  }
+});
   
 // --- Tarefas ---  
 function showToast(message) {  
@@ -340,6 +346,7 @@ function renderTasks() {
   const taskDate = new Date(`${tasks[idx].date}T${tasks[idx].time}`);
 
   tasks[idx].completed = !tasks[idx].completed;
+if (!tasks[idx].completed) tasks[idx].notified = false; // Resetar notificação ao reabrir
   localStorage.setItem('tasks', JSON.stringify(tasks));
   renderTasks();
  }
