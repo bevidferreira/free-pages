@@ -357,16 +357,22 @@ function scheduleTaskNotification(task) {
   // --- Atualização automática de tarefas vencidas ---
 setInterval(() => {
   const now = Date.now();
+  const notificationsEnabled =
+    JSON.parse(localStorage.getItem('notificationsEnabled')) !== false;
+
+  if (!notificationsEnabled) return;
 
   tasks.forEach(task => {
     if (task.notified) return;
+    if (task.completed) return;
 
     const taskTime = new Date(`${task.date}T${task.time}`).getTime();
+
     if (taskTime <= now) {
       navigator.serviceWorker.ready.then(reg => {
-        reg.active.postMessage({
+        reg.active?.postMessage({
           type: 'SHOW_NOTIFICATION',
-          task: task
+          task
         });
       });
 
@@ -375,7 +381,7 @@ setInterval(() => {
   });
 
   localStorage.setItem('tasks', JSON.stringify(tasks));
-}, 30000); // a cada 30 segundos
+}, 15000); // agora a cada 15s (mais preciso)
 
   if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
