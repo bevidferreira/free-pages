@@ -48,14 +48,17 @@ self.addEventListener('message', event => {
     const task = event.data.task;
 
     self.registration.showNotification(`Tarefa: ${task.title}`, {
-      body: task.desc || 'Hora da tarefa!',
-      tag: 'task-' + task.id,
-      icon: './icon-192.png',
-      badge: './icon-192.png',
-      requireInteraction: true,
-      data: { taskId: task.id }
-    });
+  body: task.desc || 'Hora da tarefa!',
+  tag: 'task-' + task.id,
+  icon: './icon-192.png',
+  badge: './icon-192.png',
+  vibrate: [200, 100, 200],
+  requireInteraction: true,
+  renotify: true,
+  data: {
+    taskId: task.id
   }
+}
 });
 
 self.addEventListener('notificationclick', event => {
@@ -63,11 +66,18 @@ self.addEventListener('notificationclick', event => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clientList => {
-        for (const client of clientList) {
-          if ('focus' in client) return client.focus();
+      .then(clients => {
+        for (const client of clients) {
+          if ('focus' in client) {
+            client.focus();
+            client.postMessage({
+              type: 'OPEN_TASKS',
+              taskId: event.notification.data.taskId
+            });
+            return;
+          }
         }
-        return self.clients.openWindow('./');
+        return self.clients.openWindow('./#tasks');
       })
   );
 });
