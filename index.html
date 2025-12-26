@@ -185,10 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggle-notifications').checked = notifEnabled !== false;  
   
   tasks = JSON.parse(localStorage.getItem('tasks')) || [];  
-  renderTasks();  
-  
-  showPage('page-dashboard');  
-});  
+  renderTasks();
   
 // --- Configurações ---  
 document.getElementById('toggle-theme').addEventListener('change', e => {  
